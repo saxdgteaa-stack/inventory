@@ -1,0 +1,391 @@
+// Liquor Store Management System - Production Schema
+// Design Principle: Stock is NEVER edited directly. All changes go through stock movements.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  OWNER
+  SELLER
+}
+
+enum PaymentMethod {
+  CASH
+  MPESA
+  CARD
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StockMovementType {
+  PURCHASE      // Stock added from purchase
+  SALE          // Stock deducted from sale
+  ADJUSTMENT    // Manual adjustment (damage, theft, correction)
+  RETURN        // Return to supplier
+  VOID_SALE     // Stock restored from voided sale
+}
+
+enum DailyClosingStatus {
+  PENDING
+  APPROVED
+  DISCREPANCY
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          UserRole @default(SELLER)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  sales              Sale[]
+  submittedExpenses  Expense[]         @relation("ExpenseSubmitter")
+  approvedExpenses   Expense[]         @relation("ExpenseApprover")
+  stockMovements     StockMovement[]
+  dailyClosings      DailyClosing[]
+  auditLogs          AuditLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// ============================================
+// PRODUCT & INVENTORY
+// ============================================
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  products Product[]
+
+  @@index([name])
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  sku           String   @unique
+  barcode       String?  @unique
+  name          String
+  description   String?
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+  
+  // Pricing
+  costPrice     Float    // Purchase cost
+  sellingPrice  Float    // Selling price
+  
+  // Stock
+  currentStock  Int      @default(0)
+  reorderLevel  Int      @default(10)  // Low stock alert threshold
+  
+  // Status
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  stockMovements StockMovement[]
+  saleItems      SaleItem[]
+  purchaseItems  PurchaseItem[]
+
+  @@index([sku])
+  @@index([barcode])
+  @@index([name])
+  @@index([categoryId])
+  @@index([isActive])
+}
+
+model StockMovement {
+  id          String             @id @default(cuid())
+  productId   String
+  product     Product            @relation(fields: [productId], references: [id])
+  type        StockMovementType
+  quantity    Int                // Positive for additions, negative for deductions
+  reason      String?
+  referenceId String?            // Links to Sale, Purchase, or other transaction
+  userId      String
+  user        User               @relation(fields: [userId], references: [id])
+  createdAt   DateTime           @default(now())
+
+  // Cost tracking for accurate COGS
+  unitCost    Float?             // Cost per unit at time of movement
+
+  @@index([productId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ============================================
+// SALES & TRANSACTIONS
+// ============================================
+
+model Sale {
+  id              String        @id @default(cuid())
+  receiptNumber   String        @unique
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  
+  // Totals
+  subtotal        Float         // Sum of items before any adjustments
+  discount        Float         @default(0)
+  tax             Float         @default(0)
+  total           Float         // Final amount paid
+  
+  // Payment
+  paymentMethod   PaymentMethod
+  paymentReference String?     // M-Pesa transaction ID, card reference, etc.
+  
+  // Profit tracking
+  totalCost       Float         // Sum of item costs at time of sale
+  grossProfit     Float         // total - totalCost
+  
+  // Status
+  isVoided        Boolean       @default(false)
+  voidedAt        DateTime?
+  voidedBy        String?
+  voidReason      String?
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  items           SaleItem[]
+
+  @@index([receiptNumber])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([isVoided])
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  // Snapshot at time of sale (immutable)
+  productName String
+  quantity    Int
+  unitPrice   Float    // Selling price at time of sale
+  unitCost    Float    // Cost price at time of sale
+  subtotal    Float    // quantity * unitPrice
+  
+  createdAt   DateTime @default(now())
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+// ============================================
+// PURCHASES
+// ============================================
+
+model Purchase {
+  id              String        @id @default(cuid())
+  invoiceNumber   String?       // Supplier invoice number
+  supplierName    String?
+  supplierContact String?
+  
+  // Totals
+  subtotal        Float         // Sum of items
+  tax             Float         @default(0)
+  total           Float         // Total cost
+  
+  // Status
+  isReceived      Boolean       @default(false)
+  receivedAt      DateTime?
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  items           PurchaseItem[]
+
+  @@index([invoiceNumber])
+  @@index([createdAt])
+}
+
+model PurchaseItem {
+  id            String    @id @default(cuid())
+  purchaseId    String
+  purchase      Purchase  @relation(fields: [purchaseId], references: [id])
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id])
+  
+  // Details
+  quantity      Int
+  unitCost      Float      // Cost per unit
+  subtotal      Float      // quantity * unitCost
+  
+  createdAt     DateTime   @default(now())
+
+  @@index([purchaseId])
+  @@index([productId])
+}
+
+// ============================================
+// EXPENSES
+// ============================================
+
+model ExpenseCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  expenses Expense[]
+
+  @@index([name])
+}
+
+model Expense {
+  id            String         @id @default(cuid())
+  categoryId    String
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id])
+  
+  // Details
+  amount        Float
+  description   String
+  paymentMethod PaymentMethod
+  
+  // Receipt
+  receiptImage  String?        // Path to uploaded receipt image
+  
+  // Approval workflow
+  status          ExpenseStatus  @default(PENDING)
+  submittedBy     String
+  submitter       User           @relation("ExpenseSubmitter", fields: [submittedBy], references: [id])
+  approvedBy      String?
+  approver        User?          @relation("ExpenseApprover", fields: [approvedBy], references: [id])
+  approvedAt      DateTime?
+  rejectionReason String?
+  
+  // Timestamps
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([submittedBy])
+  @@index([createdAt])
+}
+
+// ============================================
+// DAILY CLOSING
+// ============================================
+
+model DailyClosing {
+  id              String              @id @default(cuid())
+  date            DateTime            @unique  // Closing date
+  userId          String
+  user            User                @relation(fields: [userId], references: [id])
+  
+  // Expected amounts (from system)
+  expectedCash    Float               // Expected cash sales
+  expectedMpesa   Float               // Expected M-Pesa sales
+  expectedCard    Float               // Expected card sales
+  expectedTotal   Float               // Total expected
+  
+  // Declared amounts (by seller)
+  declaredCash    Float               // Physical cash counted
+  declaredMpesa   Float?              // M-Pesa total from statement
+  declaredCard    Float?              // Card total from statement
+  
+  // Variance
+  cashVariance    Float               // declaredCash - expectedCash
+  totalVariance   Float               // Total variance
+  
+  // Status
+  status          DailyClosingStatus  @default(PENDING)
+  notes           String?
+  
+  // Approval
+  approvedBy      String?
+  approvedAt      DateTime?
+  
+  // Timestamps
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([date])
+  @@index([status])
+  @@index([userId])
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Action details
+  action      String   // e.g., "SALE_VOID", "STOCK_ADJUSTMENT", "EXPENSE_APPROVE"
+  entityType  String   // e.g., "Sale", "Product", "Expense"
+  entityId    String   // ID of affected entity
+  description String   // Human-readable description
+  
+  // Change tracking
+  oldValue    String?  // JSON string of old value
+  newValue    String?  // JSON string of new value
+  
+  // Metadata
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+// ============================================
+// SETTINGS
+// ============================================
+
+model Setting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   // JSON string for complex values
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+}
