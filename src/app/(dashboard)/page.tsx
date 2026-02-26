@@ -88,16 +88,14 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-64 bg-muted animate-pulse rounded" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="space-y-4">
+        <div className="h-6 w-40 bg-muted animate-pulse rounded" />
+        <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="bg-card border-border">
-              <CardHeader className="pb-2">
-                <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+              <CardContent className="pt-4">
+                <div className="h-4 w-16 bg-muted animate-pulse rounded mb-2" />
+                <div className="h-6 w-24 bg-muted animate-pulse rounded" />
               </CardContent>
             </Card>
           ))}
@@ -115,17 +113,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 md:space-y-6">
+      {/* Welcome Section - Compact on mobile */}
+      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Welcome back, {session?.user?.name?.split(" ")[0] || "User"}
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">
+            Hi, {session?.user?.name?.split(" ")[0] || "User"} 👋
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
+              weekday: "short",
+              month: "short",
               day: "numeric",
             })}
           </p>
@@ -133,7 +131,7 @@ export default function DashboardPage() {
         {!isOwner && (
           <Button
             asChild
-            className="bg-amber-500 hover:bg-amber-600 text-zinc-900"
+            className="bg-amber-500 hover:bg-amber-600 text-zinc-900 w-full xs:w-auto"
           >
             <Link href="/pos">
               <ShoppingCart className="mr-2 h-4 w-4" />
@@ -143,48 +141,48 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Key Metrics - 2 columns on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3 md:pb-2 md:pt-4 md:px-4">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
               Today&apos;s Sales
             </CardTitle>
             <DollarSign className="h-4 w-4 text-amber-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
+          <CardContent className="pb-3 px-3 md:pb-4 md:px-4">
+            <div className="text-lg md:text-2xl font-bold text-foreground">
               KES {data.todaySales.toLocaleString()}
             </div>
-            <div className="flex items-center text-xs mt-1">
+            <div className="flex items-center text-xs mt-0.5">
               {data.todaySalesChange >= 0 ? (
                 <span className="text-green-500 flex items-center">
-                  <ArrowUpRight className="h-3 w-3 mr-1" />+
+                  <ArrowUpRight className="h-3 w-3 mr-0.5" />+
                   {data.todaySalesChange}%
                 </span>
               ) : (
                 <span className="text-red-500 flex items-center">
-                  <ArrowDownRight className="h-3 w-3 mr-1" />
+                  <ArrowDownRight className="h-3 w-3 mr-0.5" />
                   {data.todaySalesChange}%
                 </span>
               )}
-              <span className="text-muted-foreground ml-1">vs yesterday</span>
             </div>
           </CardContent>
         </Card>
 
         {isOwner && data.grossProfit !== undefined && (
           <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3 md:pb-2 md:pt-4 md:px-4">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                 Gross Profit
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-green-500" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="pb-3 px-3 md:pb-4 md:px-4">
+              <div className="text-lg md:text-2xl font-bold text-foreground">
                 KES {data.grossProfit.toLocaleString()}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="text-xs text-muted-foreground mt-0.5">
                 {data.grossProfitMargin}% margin
               </div>
             </CardContent>
@@ -193,18 +191,18 @@ export default function DashboardPage() {
 
         {isOwner && data.expenses !== undefined && (
           <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Today&apos;s Expenses
+            <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3 md:pb-2 md:pt-4 md:px-4">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                Expenses
               </CardTitle>
               <Receipt className="h-4 w-4 text-orange-500" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="pb-3 px-3 md:pb-4 md:px-4">
+              <div className="text-lg md:text-2xl font-bold text-foreground">
                 KES {data.expenses.toLocaleString()}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {data.pendingExpenses} pending approvals
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {data.pendingExpenses} pending
               </div>
             </CardContent>
           </Card>
@@ -212,17 +210,17 @@ export default function DashboardPage() {
 
         {isOwner && data.netProfit !== undefined && (
           <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3 md:pb-2 md:pt-4 md:px-4">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                 Net Profit
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-emerald-500" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+            <CardContent className="pb-3 px-3 md:pb-4 md:px-4">
+              <div className="text-lg md:text-2xl font-bold text-foreground">
                 KES {data.netProfit.toLocaleString()}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="text-xs text-muted-foreground mt-0.5">
                 After expenses
               </div>
             </CardContent>
@@ -230,34 +228,29 @@ export default function DashboardPage() {
         )}
 
         <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Low Stock Items
+          <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3 md:pb-2 md:pt-4 md:px-4">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+              Low Stock
             </CardTitle>
             <AlertTriangle className="h-4 w-4 text-amber-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
+          <CardContent className="pb-3 px-3 md:pb-4 md:px-4">
+            <div className="text-lg md:text-2xl font-bold text-foreground">
               {data.lowStockCount}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-xs text-muted-foreground mt-0.5">
               of {data.totalProducts} products
             </div>
           </CardContent>
         </Card>
 
         {!isOwner && (
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex gap-2">
-              <Button size="sm" variant="outline" asChild>
+          <Card className="bg-card border-border col-span-2">
+            <CardContent className="flex gap-2 pt-4 pb-3 px-3">
+              <Button size="sm" variant="outline" asChild className="flex-1">
                 <Link href="/expenses">Add Expense</Link>
               </Button>
-              <Button size="sm" variant="outline" asChild>
+              <Button size="sm" variant="outline" asChild className="flex-1">
                 <Link href="/closing">Daily Closing</Link>
               </Button>
             </CardContent>
@@ -265,57 +258,74 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/* Payment, Sales, Stock - Stack on mobile */}
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
+        {/* Payment Breakdown - Compact on mobile */}
         <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">Payment Breakdown</CardTitle>
-            <CardDescription>Today&apos;s payment methods</CardDescription>
+          <CardHeader className="pb-2 md:pb-4">
+            <CardTitle className="text-sm md:text-base text-foreground">
+              Payments
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Today&apos;s breakdown
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Banknote className="h-4 w-4 text-green-500" />
+                <div className="p-1.5 rounded bg-green-500/10">
+                  <Banknote className="h-3.5 w-3.5 text-green-500" />
+                </div>
                 <span className="text-sm">Cash</span>
               </div>
-              <span className="font-medium">
+              <span className="font-medium text-sm">
                 KES {data.paymentBreakdown.cash.toLocaleString()}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-purple-500" />
+                <div className="p-1.5 rounded bg-purple-500/10">
+                  <Smartphone className="h-3.5 w-3.5 text-purple-500" />
+                </div>
                 <span className="text-sm">M-Pesa</span>
               </div>
-              <span className="font-medium">
+              <span className="font-medium text-sm">
                 KES {data.paymentBreakdown.mpesa.toLocaleString()}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-blue-500" />
+                <div className="p-1.5 rounded bg-blue-500/10">
+                  <CreditCard className="h-3.5 w-3.5 text-blue-500" />
+                </div>
                 <span className="text-sm">Card</span>
               </div>
-              <span className="font-medium">
+              <span className="font-medium text-sm">
                 KES {data.paymentBreakdown.card.toLocaleString()}
               </span>
             </div>
           </CardContent>
         </Card>
 
+        {/* Recent Sales */}
         <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 md:pb-4">
             <div>
-              <CardTitle className="text-foreground">Recent Sales</CardTitle>
-              <CardDescription>Latest transactions</CardDescription>
+              <CardTitle className="text-sm md:text-base text-foreground">
+                Recent Sales
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Latest transactions
+              </CardDescription>
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/reports">View All</Link>
+            <Button variant="ghost" size="sm" asChild className="text-xs">
+              <Link href="/reports">View</Link>
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {data.recentSales.length > 0 ? (
-                data.recentSales.map((sale) => (
+                data.recentSales.slice(0, 4).map((sale) => (
                   <div
                     key={sale.id}
                     className="flex items-center justify-between"
@@ -330,7 +340,7 @@ export default function DashboardPage() {
                       <p className="text-sm font-medium">
                         KES {sale.amount.toLocaleString()}
                       </p>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[10px] px-1.5">
                         {sale.paymentMethod}
                       </Badge>
                     </div>
@@ -343,36 +353,43 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Low Stock */}
         <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 md:pb-4">
             <div>
-              <CardTitle className="text-foreground">Low Stock Alert</CardTitle>
-              <CardDescription>Products below reorder level</CardDescription>
+              <CardTitle className="text-sm md:text-base text-foreground">
+                Low Stock
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Below reorder level
+              </CardDescription>
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/inventory">View All</Link>
+            <Button variant="ghost" size="sm" asChild className="text-xs">
+              <Link href="/inventory">View</Link>
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {data.lowStockProducts.length > 0 ? (
-                data.lowStockProducts.map((product, index) => (
+                data.lowStockProducts.slice(0, 4).map((product, index) => (
                   <div key={index} className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">{product.name}</span>
+                      <span className="text-sm truncate max-w-[140px]">
+                        {product.name}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {product.stock}/{product.reorderLevel}
                       </span>
                     </div>
                     <Progress
                       value={(product.stock / product.reorderLevel) * 100}
-                      className="h-1.5"
+                      className="h-1"
                     />
                   </div>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  All products are well stocked
+                  All stocked well
                 </p>
               )}
             </div>
@@ -380,18 +397,17 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Weekly Chart - Owner Only */}
       {isOwner && data.weeklySales && (
         <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-foreground">
-              Weekly Sales Overview
+          <CardHeader className="pb-2 md:pb-4">
+            <CardTitle className="text-sm md:text-base text-foreground">
+              Weekly Sales
             </CardTitle>
-            <CardDescription>
-              Sales performance for the past 7 days
-            </CardDescription>
+            <CardDescription className="text-xs">Past 7 days</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end gap-2 h-48">
+            <div className="flex items-end gap-1.5 md:gap-2 h-32 md:h-48">
               {data.weeklySales.map((day, index) => {
                 const maxSales = Math.max(
                   ...data.weeklySales!.map((d) => d.sales),
@@ -401,7 +417,7 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={index}
-                    className="flex-1 flex flex-col items-center gap-2"
+                    className="flex-1 flex flex-col items-center gap-1 md:gap-2"
                   >
                     <div
                       className="w-full bg-zinc-800 rounded-t relative"
@@ -412,7 +428,7 @@ export default function DashboardPage() {
                         style={{ height: "100%" }}
                       />
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] md:text-xs text-muted-foreground">
                       {day.day}
                     </span>
                   </div>

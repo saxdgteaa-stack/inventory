@@ -140,21 +140,21 @@
     scrollbar-width: thin;
     scrollbar-color: var(--muted) transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: var(--muted);
     border-radius: 3px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background-color: var(--muted-foreground);
   }
@@ -165,11 +165,11 @@
   .ls-accent-text {
     color: var(--ls-accent);
   }
-  
+
   .ls-accent-bg {
     background-color: var(--ls-accent);
   }
-  
+
   .ls-accent-border {
     border-color: var(--ls-accent);
   }
@@ -178,10 +178,16 @@
 /* Sidebar transition utilities */
 @layer utilities {
   .sidebar-transition {
-    transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
+    transition:
+      width 0.3s ease-in-out,
+      transform 0.3s ease-in-out;
   }
-  
+
   .main-content-transition {
     transition: margin-left 0.3s ease-in-out;
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
